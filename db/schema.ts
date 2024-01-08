@@ -14,6 +14,12 @@ export const userSystemEnum = pgEnum('user_system_enum', [
 	'api',
 ])
 
+export const messagesTypeEnum = pgEnum('messages_type_enum', [
+	'question',
+	'answer',
+	'file',
+])
+
 export const chats = pgTable('chats', {
 	id: serial('id').primaryKey(),
 	pdfName: text('pdf_name').notNull(),
@@ -34,6 +40,7 @@ export const messages = pgTable('messages', {
 		length: 255,
 	}).notNull(),
 	message: text('message').notNull(),
+	messageType: messagesTypeEnum('message_type').notNull().default('question'),
 	createdAt: timestamp('created_at').notNull().defaultNow(),
-	role: userSystemEnum('role').default('system'),
+	role: userSystemEnum('role').default('user'),
 })

@@ -1,15 +1,21 @@
-import { generateFileUploadURL } from '@/actions/aws'
+import { generateFileUploadURL, deleteFileFromBucket } from '@/actions/aws'
 
-export async function uploadFile(file: File) {
+export async function uploadFile(
+	file: File
+): Promise<{ Key: string; fileName: string }> {
 	try {
-		const url = await generateFileUploadURL({
+		const {
+			uploadURL,
+			Key,
+			fileName: _fileName,
+		} = await generateFileUploadURL({
 			fileName: file.name,
 		})
-		console.log('uploadURl', url)
+		console.log('uploadURl', uploadURL)
 		return new Promise((resolve, reject) => {
 			const xhr = new XMLHttpRequest()
 
-			xhr.open('PUT', url, true)
+			xhr.open('PUT', uploadURL, true)
 			xhr.upload.onprogress = function (e) {
 				if (e.lengthComputable) {
 					console.log('Upload progress:', e.loaded / e.total)
@@ -17,7 +23,10 @@ export async function uploadFile(file: File) {
 			}
 			xhr.onload = function () {
 				if (xhr.status === 200) {
-					resolve(xhr.response)
+					resolve({
+						Key,
+						fileName: _fileName,
+					})
 				} else {
 					reject(new Error('Upload failed: ' + xhr.status))
 				}
@@ -28,6 +37,16 @@ export async function uploadFile(file: File) {
 			xhr.send(file)
 		})
 	} catch (err) {
-		console.log(err)
+		console.error('Error generating upload URL:', err)
+		return Promise.reject(err)
+	}
+}
+
+export async function deleteFile(Key: string) {
+	try {
+		await deleteFileFromBucket(Key)
+	} catch (err) {
+		console.error('Error generating upload URL:', err)
+		return Promise.reject(err)
 	}
 }
