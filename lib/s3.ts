@@ -1,4 +1,8 @@
-import { generateFileUploadURL, deleteFileFromBucket } from '@/actions/aws'
+import {
+	generateFileUploadURL,
+	deleteFileFromBucket,
+	readFileFromBucket,
+} from '@/actions/aws'
 
 export async function uploadFile(
 	file: File
@@ -45,6 +49,20 @@ export async function uploadFile(
 export async function deleteFile(Key: string) {
 	try {
 		await deleteFileFromBucket(Key)
+	} catch (err) {
+		console.error('Error generating upload URL:', err)
+		return Promise.reject(err)
+	}
+}
+
+export const readFile = async (Key: string) => {
+	try {
+		const data = await readFileFromBucket(Key)
+		if (!data) {
+			throw new Error('No data')
+		}
+		const dataAsString = data.toString('utf-8') // Convert buffer to string
+		console.log(JSON.stringify(dataAsString))
 	} catch (err) {
 		console.error('Error generating upload URL:', err)
 		return Promise.reject(err)

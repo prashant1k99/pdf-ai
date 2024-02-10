@@ -3,6 +3,18 @@
 import AWS from 'aws-sdk'
 import { currentUser } from '@clerk/nextjs'
 
+AWS.config.update({
+	accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+	secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+	region: 'ap-south-1',
+})
+const s3 = new AWS.S3({
+	params: {
+		Bucket: process.env.AWS_BUCKET_NAME,
+	},
+	signatureVersion: 'v4',
+})
+
 export const generateFileUploadURL = async ({
 	fileName,
 }: {
@@ -23,17 +35,6 @@ export const generateFileUploadURL = async ({
 	}
 
 	try {
-		AWS.config.update({
-			accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-			secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-			region: 'ap-south-1',
-		})
-		const s3 = new AWS.S3({
-			params: {
-				Bucket: process.env.AWS_BUCKET_NAME,
-			},
-			signatureVersion: 'v4',
-		})
 		const uploadURL = await s3.getSignedUrlPromise('putObject', params)
 		return { uploadURL, Key, fileName: uniqueFileName }
 	} catch (error) {
@@ -49,19 +50,6 @@ export const deleteFileFromBucket = async (Key: string) => {
 		throw new Error('AWS_BUCKET_NAME is not defined')
 	}
 
-	AWS.config.update({
-		accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-		secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-		region: 'ap-south-1',
-	})
-
-	const s3 = new AWS.S3({
-		params: {
-			Bucket: bucketName,
-		},
-		signatureVersion: 'v4',
-	})
-
 	const params = {
 		Bucket: bucketName,
 		Key,
@@ -71,6 +59,48 @@ export const deleteFileFromBucket = async (Key: string) => {
 		await s3.deleteObject(params).promise()
 	} catch (error) {
 		console.log('Error deleting object', error)
+		throw error
+	}
+}
+
+export const readFileFromBucket = async (Key: string) => {
+	const bucketName = process.env.AWS_BUCKET_NAME
+
+	if (!bucketName) {
+		throw new Error('AWS_BUCKET_NAME is not defined')
+	}
+
+	const params = {
+		Bucket: bucketName,
+		Key,
+	}
+
+	try {
+		const data = await s3.getObject(params).promise()
+		return data.Body
+	} catch (error) {
+		console.log('Error reading object', error)
+		throw error
+	}
+}
+
+export const readFileFromBucketSignedURL = async (Key: string) => {
+	const bucketName = process.env.AWS_BUCKET_NAME
+
+	if (!bucketName) {
+		throw new Error('AWS_BUCKET_NAME is not defined')
+	}
+
+	const params = {
+		Bucket: bucketName,
+		Key,
+	}
+
+	try {
+		const url = await s3.getSignedUrlPromise('getObject', params)
+		return url
+	} catch (error) {
+		console.log('Error reading object', error)
 		throw error
 	}
 }

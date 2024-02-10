@@ -1,6 +1,6 @@
 'use client'
 
-import { deleteFile, uploadFile } from '@/lib/s3'
+import { deleteFile, readFile, uploadFile } from '@/lib/s3'
 import { useMutation } from '@tanstack/react-query'
 import { Inbox, Loader2 } from 'lucide-react'
 import { useState } from 'react'
@@ -61,6 +61,7 @@ const FileUpload = () => {
 				mutate(data, {
 					onSuccess: () => {
 						toast.success('Upload Success')
+						readFile(data.Key)
 					},
 					onError: () => {
 						deleteFile(data.Key)
