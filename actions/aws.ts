@@ -77,6 +77,7 @@ export const readFileFromBucket = async (Key: string) => {
 
 	try {
 		const data = await s3.getObject(params).promise()
+		console.log('Data', data)
 		return data.Body
 	} catch (error) {
 		console.log('Error reading object', error)
